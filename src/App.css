@@ -1,0 +1,111 @@
+:root{--bg:#0d1117;--panel:#141a22;--panel2:#1b232e;--line:#263140;--text:#e6ebf2;--muted:#8b97a8;--accent:#4aa3ff;--warn:#f0b53a;--bad:#ff6b6b;--good:#5ad19a;color-scheme:dark}
+*{box-sizing:border-box}
+html,body,#root{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.4 'Noto Sans Variable',system-ui,sans-serif}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer}
+button:hover:not(:disabled){border-color:#3b4b60;background:#212b38}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:#1f5fa8;border-color:#2c74c8}
+button.primary:hover:not(:disabled){background:#2569b8}
+button.danger{color:var(--bad)}
+button.x{background:none;border:0;color:var(--muted);padding:4px 8px}
+select,input:not([type]),input[type=text],textarea{background:#0f141b;border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+code{font:12px ui-monospace,monospace;background:#0f141b;padding:1px 4px;border-radius:4px}
+.muted,.hint{color:var(--muted)}
+.hint{font-size:12px;margin:6px 0}
+
+.app{display:flex;flex-direction:column;height:100%}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.brand{font:700 18px 'Saira Semi Condensed',sans-serif;letter-spacing:.04em;display:flex;align-items:baseline;gap:8px}
+.brand small{font:400 12px 'Noto Sans Variable';color:var(--muted);letter-spacing:0}
+.logo{color:var(--accent)}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.printgroup{display:flex;gap:6px;align-items:center;margin-left:8px;padding-left:12px;border-left:1px solid var(--line)}
+.printgroup span{color:var(--muted);font-size:13px}
+.banner{padding:8px 16px;font-size:13px}
+.banner.busy{background:#13283f;color:#bcd9ff}
+.banner.err{background:#3a1717;color:#ffd0d0;display:flex;gap:12px;align-items:center}
+
+.empty{flex:1;display:grid;place-items:center;cursor:pointer;padding:24px}
+.drop{border:2px dashed #33445a;border-radius:16px;padding:48px 56px;text-align:center;max-width:640px}
+.drop h1{font:700 26px 'Saira Semi Condensed';margin:0 0 8px}
+.dropveil{position:fixed;inset:0;background:rgba(20,60,110,.55);display:grid;place-items:center;font:700 28px 'Saira Semi Condensed';pointer-events:none;z-index:50}
+
+.main{flex:1;min-height:0;display:grid;grid-template-columns:280px 1fr}
+.main.with-editor{grid-template-columns:280px 1fr 380px}
+.side{border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+.filters{display:flex;gap:6px;padding:10px}
+.filters select{flex:1;min-width:0}
+.units{list-style:none;margin:0;padding:0 6px;overflow:auto;flex:1}
+.units li{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:13px}
+.units li:hover{background:var(--panel2)}
+.units li.sel{background:#1d2b3d}
+.units li.off .nm{opacity:.45;text-decoration:line-through}
+.units .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.units .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.units .nm small{color:var(--muted)}
+.units .tag{font-size:11px;background:#2a3646;border-radius:4px;padding:0 4px;color:#bcd}
+.units .pt{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chk{font-weight:700;width:14px;text-align:center}
+.chk.ok{color:var(--good)}.chk.warn{color:var(--warn)}
+.sidefoot{border-top:1px solid var(--line);padding:8px 12px;font-size:13px}
+.sidefoot input{width:64px;margin:0 4px}
+.sidefoot .hint{margin:6px 0 0}
+
+.grid{overflow:auto;padding:18px;display:flex;flex-wrap:wrap;gap:18px;align-content:flex-start}
+.cardwrap{cursor:pointer;border-radius:4px;outline:2px solid transparent;outline-offset:3px;transition:outline-color .1s}
+.cardwrap:hover{outline-color:#2a3a4f}
+.cardwrap.sel{outline-color:var(--accent)}
+.cardwrap.off{opacity:.4}
+.cardwrap .card{box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.cardwrap .meta{font-size:11px;color:var(--muted);margin-top:4px;text-align:center}
+.cardwrap .meta b{color:var(--bad)}
+
+.editor{border-left:1px solid var(--line);background:var(--panel);overflow:auto;padding:12px 14px 24px}
+.edhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.edhead h2{font:700 20px 'Saira Semi Condensed';margin:0}
+.edhead h2 small{color:var(--muted);font-weight:500}
+.src{font-size:11px;color:var(--muted);word-break:break-all}
+.editor fieldset{border:1px solid var(--line);border-radius:8px;margin:12px 0 0;padding:8px 10px 10px}
+.editor legend{font:700 12px 'Saira Semi Condensed';letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 4px}
+.row{display:flex;gap:8px;align-items:center;margin-top:10px}
+.slider{display:flex;gap:8px;align-items:center;font-size:13px}
+.slider input{flex:1}
+.slider span{width:72px;color:var(--muted);font-size:12px}
+.field{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:8px;font-size:13px;margin-top:6px}
+.seg{display:flex}
+.seg button{border-radius:0;flex:1}
+.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}
+.seg button.on{background:#1f5fa8;border-color:#2c74c8}
+.btnrow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.btnrow.end{justify-content:space-between;margin-top:16px}
+.filebtn{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer;font-size:14px}
+.editor textarea{width:100%;height:340px;font:12px/1.4 ui-monospace,monospace;margin-top:6px}
+.ok{color:var(--good);margin:4px 0}
+.err{color:var(--bad)}
+.diffs p{margin:4px 0;font-size:13px}
+.warns{margin:6px 0 0;padding-left:0;list-style:none;color:var(--warn);font-size:12px}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:40}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;width:min(900px,94vw);max-height:88vh;overflow:auto}
+.rules{width:100%;border-collapse:collapse;margin-top:8px}
+.rules th{text-align:left;font-size:12px;color:var(--muted);padding:4px}
+.rules td{padding:3px 4px}
+.rules input,.rules select{width:100%}
+
+.measure{position:fixed;left:-10000px;top:0;visibility:hidden;pointer-events:none}
+
+/* ---------- printing ---------- */
+.printroot{background:#fff}
+.printbar{position:sticky;top:0;z-index:5;display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:#13283f;color:#dbeaff;font-size:13px}
+.ppage{position:relative;overflow:hidden;background:#fff;margin:0 auto 12px;box-shadow:0 0 0 1px #ccc}
+.ppage .cell{position:absolute;width:70mm;height:120mm}
+.ppage .mark{position:absolute;display:block}
+.ppage .note{position:absolute;bottom:4mm;left:0;right:0;text-align:center;font:500 7pt 'Saira Semi Condensed';color:#888}
+@media print{
+  body.printing{background:#fff}
+  .printbar{display:none}
+  .ppage{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .ppage:last-child{page-break-after:auto;break-after:auto}
+}
