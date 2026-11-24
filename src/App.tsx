@@ -3,6 +3,7 @@ import { FACTIONS, type FactionId, type Override, type Unit } from './model';
 import { DEFAULT_RULES, finalUnit, fixSource, MIN_PT, splitUnit, waveOf, type CardSpec, type Rule } from './lib/deck';
 import { checkAgainstSource, isClean, type CheckResult } from './lib/check';
 import { loadPdf, type Loaded } from './lib/load';
+import { loadDataDisc } from './lib/datadisc';
 import * as store from './lib/store';
 import { Card, type Fit } from './components/Card';
 import { Editor } from './components/Editor';
@@ -54,11 +55,16 @@ export default function App() {
   // ---------- loading PDFs ----------
   const addFiles = useCallback(async (files: FileList | File[]) => {
     setError(null);
-    const list = [...files].filter((f) => f.name.toLowerCase().endsWith('.pdf'));
+    const list = [...files].filter((f) => /\.(pdf|json)$/i.test(f.name));
     if (!list.length) return;
     try {
       const added: Entry[] = [];
       for (const f of list) {
+        if (/\.json$/i.test(f.name)) { // a unit file from the SCTMG Data Disc API
+          const { unit, plain } = await loadDataDisc(f);
+          added.push({ unit, plain, art: null, key: unit.id });
+          continue;
+        }
         const got = await loadPdf(f, setBusy);
         if (!got.length) throw new Error(`${f.name} has no unit cards in it.`);
         added.push(...got.map((g) => ({ ...g, key: g.unit.id })));
@@ -67,7 +73,7 @@ export default function App() {
         const keys = new Set(added.map((a) => a.key));
         return [...lib.filter((e) => !keys.has(e.key)), ...added];
       });
-      setView({ faction: list.length === 1 ? added[0].unit.faction : 'all', wave: waveOf(list[0].name) });
+      setView({ faction: new Set(added.map((a) => a.unit.faction)).size === 1 ? added[0].unit.faction : 'all', wave: waveOf(added[0].unit.file) });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -127,8 +133,8 @@ export default function App() {
       <header className="top">
         <div className="brand"><span className="logo">◆</span> Tarot Forge <small>StarCraft TMG unit cards → 70 × 120 mm</small></div>
         <div className="actions">
-          <button className="primary" onClick={() => fileInput.current?.click()}>Add Archon PDFs</button>
-          <input ref={fileInput} type="file" accept="application/pdf" multiple hidden onChange={(ev) => { if (ev.target.files) addFiles([...ev.target.files]); ev.target.value = ''; }} />
+          <button className="primary" onClick={() => fileInput.current?.click()} title="Archon card-sheet PDFs, or unit files from the SCTMG Data Disc API">Add Archon PDFs</button>
+          <input ref={fileInput} type="file" accept="application/pdf,application/json,.json" multiple hidden onChange={(ev) => { if (ev.target.files) addFiles([...ev.target.files]); ev.target.value = ''; }} />
           <button onClick={() => setShowRules(true)}>Corrections ({rules.length})</button>
           <div className="printgroup">
             <span>Print {printSpecs.length} card{printSpecs.length === 1 ? '' : 's'}</span>

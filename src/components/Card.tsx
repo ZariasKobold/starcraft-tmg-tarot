@@ -101,7 +101,8 @@ export function Card({ spec, art, focus, fit, maxArt, onFit }: Props) {
       const h2 = c.querySelector('h2') as HTMLElement, hrow = c.querySelector('.hrow') as HTMLElement, hr = c.querySelector('.hr') as HTMLElement;
       const apply = (f: Fit) => { c.style.setProperty('--fs', f.fs + 'pt'); c.style.setProperty('--art', f.art + 'mm'); c.style.setProperty('--nm', f.nm + 'pt'); };
       if (fit) { apply(fit); return; }
-      const over = () => fitEl.scrollHeight > body.clientHeight - 1;
+      const padB = parseFloat(getComputedStyle(body).paddingBottom) || 0; // text must clear the body's bottom padding too
+      const over = () => fitEl.scrollHeight > body.clientHeight - padB - 1;
       const f: Fit = { fs: 6.6, art: Math.min(30, maxArt ?? 30), nm: 13, over: false };
       apply(f);
       while (h2.scrollWidth + hr.offsetWidth + 6 > hrow.clientWidth && f.nm > 9) { f.nm -= 0.5; apply(f); }
