@@ -3,6 +3,7 @@
 //   npm run dev   (in another terminal)
 //   npx tsx scripts/render.ts <out folder> <faction> <file.json|file.pdf> [...more]
 //   add --png to save one PNG per card instead of PDFs
+//   add --art=<folder> to give Data Disc units photos named after their id (stukov.png …), aimed by an optional focus.json
 import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
@@ -20,6 +21,24 @@ await page.goto(URL);
 await page.waitForSelector('input[type=file][multiple]', { state: 'attached' });
 await page.setInputFiles('input[type=file][multiple]', files);
 await page.waitForFunction((n) => document.querySelectorAll('.units li').length >= n, files.length);
+
+// --art=<folder>: give each Data Disc unit the photo named after its id (stukov.png, reaver.jpg…)
+const artDir = process.argv.find((a) => a.startsWith('--art='))?.slice(6);
+if (artDir) {
+  // optional focus.json in that folder: { "<id>": 0.2 } = how far down the photo the banner aims (the editor's "Aim at")
+  const fj = path.join(artDir, 'focus.json');
+  const focus: Record<string, number> = fs.existsSync(fj) ? JSON.parse(fs.readFileSync(fj, 'utf8')) : {};
+  for (const f of files.filter((f) => f.endsWith('.json'))) {
+    const d = JSON.parse(fs.readFileSync(f, 'utf8')).data;
+    const img = ['png', 'jpg', 'jpeg', 'webp'].map((x) => path.join(artDir, `${d.id}.${x}`)).find((p) => fs.existsSync(p));
+    if (!img) { console.log(`no photo for ${d.id}`); continue; }
+    await page.locator('.units li').filter({ has: page.locator('.nm', { hasText: new RegExp(`^${d.name.replace(/[()]/g, '\\$&')}$`) }) }).click();
+    await page.setInputFiles('.editor input[type=file][accept^="image"]', img);
+    if (focus[d.id] !== undefined) await page.locator('.editor .slider input').fill(String(Math.round(focus[d.id] * 100)));
+    await page.waitForTimeout(300);
+  }
+  await page.locator('.editor button', { hasText: /close|✕/i }).first().click().catch(() => {});
+}
 await page.selectOption('.filters select >> nth=0', faction);
 const waves = await page.$$eval('.filters select >> nth=1', (s) => [...(s[0] as HTMLSelectElement).options].map((o) => o.value));
 const wave = waves.filter((w) => w !== 'all').pop()!;

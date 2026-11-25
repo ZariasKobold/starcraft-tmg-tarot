@@ -3,7 +3,8 @@ import { FACTIONS, type FactionId, type Override, type Unit } from './model';
 import { DEFAULT_RULES, finalUnit, fixSource, MIN_PT, splitUnit, waveOf, type CardSpec, type Rule } from './lib/deck';
 import { checkAgainstSource, isClean, type CheckResult } from './lib/check';
 import { loadPdf, type Loaded } from './lib/load';
-import { loadDataDisc } from './lib/datadisc';
+import { ddFile, ddIdOf, fetchDataDisc, fromDataDisc, loadDataDisc } from './lib/datadisc';
+import { DataDisc } from './components/DataDisc';
 import * as store from './lib/store';
 import { Card, type Fit } from './components/Card';
 import { Editor } from './components/Editor';
@@ -34,6 +35,8 @@ export default function App() {
   const [drag, setDrag] = useState(false);
   const [minPt, setMinPt] = useState(MIN_PT);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [showDD, setShowDD] = useState(false);
+  const [sheets, setSheets] = useState<string[]>([]); // names of card-sheet PDFs kept for re-reading
 
   // ---------- persistence (IndexedDB, so the library survives reloads) ----------
   useEffect(() => {
@@ -43,6 +46,7 @@ export default function App() {
       setCustomArt((await store.get<Record<string, Art>>('customArt')) ?? {});
       setRules((await store.get<Rule[]>('rules')) ?? DEFAULT_RULES);
       setMinPt((await store.get<number>('minPt')) ?? MIN_PT);
+      setSheets((await store.get<string[]>('sheets')) ?? []);
       setReady(true);
     })();
   }, []);
@@ -53,6 +57,17 @@ export default function App() {
   useEffect(() => { if (ready) store.set('minPt', minPt); }, [minPt, ready]);
 
   // ---------- loading PDFs ----------
+  /** Swap in fresh entries; with `files`, also drop anything those files used to give that they no longer do. */
+  const merge = (added: Entry[], files?: string[]) => setLibrary((lib) => {
+    const keys = new Set(added.map((a) => a.key));
+    const from = new Set(files);
+    return [...lib.filter((e) => !keys.has(e.key) && !from.has(e.unit.file)), ...added];
+  });
+  /** Keep each card sheet so it can be read again later (after a Tarot Forge update, say) without finding the file. */
+  const keepSheet = async (f: File) => {
+    await store.set('pdf:' + f.name, await f.arrayBuffer());
+    setSheets((s) => { const n = s.includes(f.name) ? s : [...s, f.name].sort(); store.set('sheets', n); return n; });
+  };
   const addFiles = useCallback(async (files: FileList | File[]) => {
     setError(null);
     const list = [...files].filter((f) => /\.(pdf|json)$/i.test(f.name));
@@ -68,11 +83,9 @@ export default function App() {
         const got = await loadPdf(f, setBusy);
         if (!got.length) throw new Error(`${f.name} has no unit cards in it.`);
         added.push(...got.map((g) => ({ ...g, key: g.unit.id })));
+        await keepSheet(f);
       }
-      setLibrary((lib) => {
-        const keys = new Set(added.map((a) => a.key));
-        return [...lib.filter((e) => !keys.has(e.key)), ...added];
-      });
+      merge(added);
       setView({ faction: new Set(added.map((a) => a.unit.faction)).size === 1 ? added[0].unit.faction : 'all', wave: waveOf(added[0].unit.file) });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -80,6 +93,38 @@ export default function App() {
       setBusy(null);
     }
   }, []);
+
+  /** Read every kept card sheet again and fetch Data Disc units afresh. Your edits, crops and photos are kept. */
+  const reread = async () => {
+    setError(null);
+    try {
+      const added: Entry[] = [], files: string[] = [];
+      for (const name of sheets) {
+        const data = await store.get<ArrayBuffer>('pdf:' + name);
+        if (!data) continue;
+        const got = await loadPdf(new File([data], name, { type: 'application/pdf' }), setBusy);
+        added.push(...got.map((g) => ({ ...g, key: g.unit.id })));
+        files.push(name);
+      }
+      const dd = library.filter((e) => ddIdOf(e.unit.file));
+      if (dd.length) {
+        setBusy('the Data Disc');
+        const all = new Map((await fetchDataDisc()).map((d) => [d.id, d]));
+        for (const e of dd) {
+          const d = all.get(ddIdOf(e.unit.file)!);
+          if (!d) continue;
+          const { unit, plain } = fromDataDisc(d, ddFile(d, waveOf(e.unit.file)));
+          added.push({ unit, plain, art: null, key: unit.id });
+        }
+      }
+      merge(added, files);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+  const stale = library.filter((e) => !ddIdOf(e.unit.file) && !sheets.includes(e.unit.file)).map((e) => e.unit.file);
 
   // ---------- derived deck ----------
   const units = useMemo(() => library.map((e) => ({ e, u: finalUnit(e.unit, overrides[e.key], rules) })), [library, overrides, rules]);
@@ -135,6 +180,7 @@ export default function App() {
         <div className="actions">
           <button className="primary" onClick={() => fileInput.current?.click()} title="Archon card-sheet PDFs, or unit files from the SCTMG Data Disc API">Add Archon PDFs</button>
           <input ref={fileInput} type="file" accept="application/pdf,application/json,.json" multiple hidden onChange={(ev) => { if (ev.target.files) addFiles([...ev.target.files]); ev.target.value = ''; }} />
+          <button onClick={() => setShowDD(true)} title="Units from the SCTMG Data Disc, for waves without Archon card sheets">Add from Data Disc</button>
           <button onClick={() => setShowRules(true)}>Corrections ({rules.length})</button>
           <div className="printgroup">
             <span>Print {printSpecs.length} card{printSpecs.length === 1 ? '' : 's'}</span>
@@ -154,6 +200,7 @@ export default function App() {
               <h1>Drop Archon card-sheet PDFs here</h1>
               <p>For example <code>StarCraft-Terran-P2P-W3-Card-Sheets-A4_EN.pdf</code>. Several at once is fine.</p>
               <p className="muted">The PDFs are read in this browser; nothing is uploaded anywhere.</p>
+              <p>No card sheet yet? <button onClick={(e) => { e.stopPropagation(); setShowDD(true); }}>Add from Data Disc</button></p>
             </div>
           </div>
         )
@@ -191,6 +238,8 @@ export default function App() {
             <div className="sidefoot">
               <label>Split into two cards below <input type="number" min={4.6} max={6.6} step={0.1} value={minPt} onChange={(e) => setMinPt(+e.target.value || MIN_PT)} /> pt</label>
               <div className="btnrow">
+                <button disabled={!!busy || (!sheets.length && !library.some((e) => ddIdOf(e.unit.file)))} onClick={reread}
+                  title={`Reads your ${sheets.length} kept card sheet${sheets.length === 1 ? '' : 's'} again and fetches Data Disc units afresh. Your edits, crops and photos are kept.`}>Re-read sources</button>
                 <button onClick={() => {
                   const blob = new Blob([JSON.stringify({ version: 1, overrides, rules, minPt, customArt })], { type: 'application/json' });
                   const a = document.createElement('a');
@@ -212,6 +261,7 @@ export default function App() {
                   } catch { setError('That file isn’t a Tarot Forge settings backup.'); }
                 }} /></label>
               </div>
+              {stale.length > 0 && <p className="hint">Add {[...new Set(stale)].join(', ')} once more to keep {new Set(stale).size === 1 ? 'it' : 'them'} for re-reading.</p>}
               <p className="hint">Tick = include when printing. ✓ = every word matches Archon’s sheet. The number is the text size the unit would get on one card.</p>
             </div>
           </nav>
@@ -245,6 +295,12 @@ export default function App() {
         ))}
       </div>
 
+      {showDD && <DataDisc library={library.map((e) => e.unit)} onClose={() => setShowDD(false)}
+        onAdd={(got) => {
+          if (!got.length) return;
+          merge(got.map(({ unit, plain }) => ({ unit, plain, art: null, key: unit.id })));
+          setView({ faction: new Set(got.map((g) => g.unit.faction)).size === 1 ? got[0].unit.faction : 'all', wave: waveOf(got[0].unit.file) });
+        }} />}
       {showRules && <Corrections rules={rules} onChange={setRules} onClose={() => setShowRules(false)} onDefaults={() => setRules(DEFAULT_RULES)} />}
       {drag && <div className="dropveil">Drop PDFs to add them</div>}
     </div>

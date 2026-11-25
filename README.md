@@ -18,6 +18,8 @@ Then open the address it prints (usually http://localhost:5173) in Chrome or Edg
 ## Using it
 
 1. **Add Archon PDFs.** Click the button or drag the files onto the window; several at once is fine. Each unit sheet becomes a card, and your library is kept in the browser between visits.
+
+   **No card sheet yet?** Click **Add from Data Disc** to pick units from the [SCTMG Data Disc](https://sctmgdatadisc.com) (Wave 4, for example, which Archon has only published online). Tick **Only units I don't have** to see just the new ones, set the wave to file them under, and click **Add**. These units come without photos, so give each one a photo in the editor.
 2. **Check the cards.** In the sidebar:
    - **✓** means every word on the card matches Archon's sheet (after your corrections).
    - **!** means something differs; click the unit to see what.
@@ -44,9 +46,13 @@ Then open the address it prints (usually http://localhost:5173) in Chrome or Edg
 
 A unit is split into "Card 1 of 2" / "Card 2 of 2" when its text would otherwise drop below the threshold at the bottom of the sidebar (6.0 pt by default). The split falls between Movement and Assault unless that would be very lopsided. Lower the threshold to keep more units on one card.
 
+### Re-reading sources
+
+Tarot Forge keeps a copy of each card-sheet PDF you add. **Re-read sources** (bottom of the sidebar) reads them all again and fetches Data Disc units afresh. Use it after a Tarot Forge update or when the Data Disc changes. Your crops, splits, edits and photos are kept. PDFs added before this feature need adding once more; the sidebar lists them.
+
 ### Backups
 
-**Back up settings** saves your crops, splits, edits, corrections and replacement photos to a JSON file. **Restore…** loads one, which is handy on a new computer or browser. The library itself is rebuilt by adding the PDFs again.
+**Back up settings** saves your crops, splits, edits, corrections and replacement photos to a JSON file. **Restore…** loads one, which is handy on a new computer or browser. The library itself is rebuilt by adding the PDFs again (and the Data Disc units).
 
 ## How it works
 

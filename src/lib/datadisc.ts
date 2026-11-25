@@ -92,12 +92,25 @@ export function fromDataDisc(d: DDUnit, file: string): { unit: Unit; plain: stri
   return { unit, plain };
 }
 
+/** The file name a Data Disc unit is filed under; waveOf() reads the wave back out of it. */
+export const ddFile = (d: Pick<DDUnit, 'id' | 'race'>, wave: string) => `DataDisc-${d.race[0].toUpperCase() + d.race.slice(1)}-W${wave}-${d.id}.json`;
+/** The Data Disc id a library entry came from, or null for a card-sheet unit. */
+export const ddIdOf = (file: string) => file.match(/^DataDisc-\w+-W\d+-(.+)\.json$/)?.[1] ?? null;
+
 /** Reads one Data Disc unit file (the API's {data, meta} wrapper, or the bare unit). */
 export async function loadDataDisc(file: File): Promise<{ unit: Unit; plain: string }> {
   const j = JSON.parse(await file.text());
   const d: DDUnit = j.data ?? j;
   if (!d?.id || !d.race || !d.stats) throw new Error(`${file.name} isn't a Data Disc unit file`);
-  const wave = file.name.match(/-W(\d+)-/)?.[1] ?? '4';
-  const race = d.race[0].toUpperCase() + d.race.slice(1);
-  return fromDataDisc(d, `DataDisc-${race}-W${wave}-${d.id}.json`);
+  return fromDataDisc(d, ddFile(d, file.name.match(/-W(\d+)-/)?.[1] ?? '4'));
+}
+
+export const DATA_DISC = 'https://sctmgdatadisc.com/api/v1/';
+
+/** Every unit the Data Disc knows, from its public API (one request). Cost-only units have no card yet, so they're left out. */
+export async function fetchDataDisc(): Promise<DDUnit[]> {
+  const r = await fetch(DATA_DISC + 'units.json', { cache: 'no-cache' });
+  if (!r.ok) throw new Error(`The Data Disc answered ${r.status} ${r.statusText}`);
+  const j = await r.json();
+  return (j.data as (DDUnit & { status: string })[]).filter((u) => u.status === 'official');
 }

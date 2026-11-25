@@ -109,3 +109,13 @@ code{font:12px ui-monospace,monospace;background:#0f141b;padding:1px 4px;border-
   .ppage{margin:0;box-shadow:none;page-break-after:always;break-after:page}
   .ppage:last-child{page-break-after:auto;break-after:auto}
 }
+/* Add from Data Disc */
+.sheet.dd{width:min(560px,92vw)}
+.ddbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0;font-size:13px}
+.ddbar .wave{width:40px;margin-left:4px}
+.ddlist{list-style:none;margin:0;padding:0;max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.ddlist li{padding:4px 10px;font-size:13px;border-bottom:1px solid var(--line)}
+.ddlist li:last-child{border-bottom:0}
+.ddlist li.all{position:sticky;top:0;background:var(--panel,#fff)}
+.ddlist label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.ddlist .dot{width:8px;height:8px;border-radius:50%;flex:none}
